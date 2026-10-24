@@ -1,0 +1,39 @@
+# Steps: sequential groups; items in the same inner list run in parallel.
+# Also shows output parameters flowing from one step to the next.
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: steps-
+  namespace: argo
+spec:
+  entrypoint: main
+  templates:
+  - name: main
+    steps:
+    - - name: generate
+        template: gen-number
+    - - name: print-a            # these two run in parallel
+        template: print
+        arguments:
+          parameters: [{name: msg, value: "A got {{steps.generate.outputs.parameters.number}}"}]
+      - name: print-b
+        template: print
+        arguments:
+          parameters: [{name: msg, value: "B got {{steps.generate.outputs.parameters.number}}"}]
+
+  - name: gen-number
+    container:
+      image: busybox:1.36
+      command: [sh, -c]
+      args: ["echo $((RANDOM % 100)) > /tmp/number.txt"]
+    outputs:
+      parameters:
+      - name: number
+        valueFrom: {path: /tmp/number.txt}
+
+  - name: print
+    inputs:
+      parameters: [{name: msg}]
+    container:
+      image: busybox:1.36
+      command: [echo, "{{inputs.parameters.msg}}"]

@@ -1,0 +1,15 @@
+# This one is rejected: destination namespace does not match 'team-a-*'.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-a-escape
+  namespace: argocd
+spec:
+  project: team-a
+  source:
+    repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+    targetRevision: main
+    path: labs/apps/podinfo/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system

@@ -1,0 +1,14 @@
+# The smallest Workflow: one container template. `generateName` so you can submit it many times.
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: hello-world-
+  namespace: argo
+spec:
+  entrypoint: hello
+  templates:
+  - name: hello
+    container:
+      image: busybox:1.36
+      command: [echo]
+      args: ["hello from argo workflows"]

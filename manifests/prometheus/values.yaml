@@ -1,0 +1,38 @@
+# kube-prometheus-stack values tuned for a laptop kind cluster.
+fullnameOverride: prom
+grafana:
+  adminPassword: admin
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: ["grafana.${BASE_DOMAIN}"]
+  sidecar:
+    dashboards:
+      searchNamespace: ALL      # pick up dashboards from lab namespaces too
+prometheus:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: ["prometheus.${BASE_DOMAIN}"]
+  prometheusSpec:
+    retention: 2d
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    # Pick up ServiceMonitors/PodMonitors/Rules from every namespace, not only Helm-labelled ones.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    resources:
+      requests: {cpu: 100m, memory: 512Mi}
+alertmanager:
+  enabled: false
+# kind has no kube-proxy metrics endpoint bound externally / etcd & scheduler on control-plane node
+kubeProxy:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false

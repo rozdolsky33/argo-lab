@@ -1,0 +1,30 @@
+# Cluster generator: one Application per cluster registered in Argo CD (Secrets labelled
+# argocd.argoproj.io/secret-type=cluster). The in-cluster entry only matches when it has a Secret;
+# see README for how to label it so this generator fires.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: podinfo-per-cluster
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+  - clusters:
+      selector:
+        matchLabels:
+          lab: "true"
+  template:
+    metadata:
+      name: 'podinfo-{{.name}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+        targetRevision: main
+        path: labs/apps/podinfo/overlays/dev
+      destination:
+        server: '{{.server}}'
+        namespace: podinfo-cluster-gen
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true]

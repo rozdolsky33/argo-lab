@@ -1,0 +1,47 @@
+# DAG: declare dependencies instead of ordering. Diamond shape: A -> (B, C) -> D.
+# `when` shows conditional execution; `withItems` shows fan-out loops.
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: dag-
+  namespace: argo
+spec:
+  entrypoint: diamond
+  arguments:
+    parameters:
+    - name: run-optional
+      value: "no"
+  templates:
+  - name: diamond
+    dag:
+      tasks:
+      - name: A
+        template: echo
+        arguments: {parameters: [{name: msg, value: A}]}
+      - name: B
+        dependencies: [A]
+        template: echo
+        arguments: {parameters: [{name: msg, value: B}]}
+      - name: C
+        dependencies: [A]
+        template: echo
+        arguments: {parameters: [{name: msg, value: C}]}
+      - name: D
+        dependencies: [B, C]
+        template: echo
+        arguments: {parameters: [{name: msg, value: D}]}
+      - name: fanout
+        dependencies: [D]
+        template: echo
+        arguments: {parameters: [{name: msg, value: "item {{item}}"}]}
+        withItems: [one, two, three]
+      - name: only-sometimes
+        dependencies: [D]
+        template: echo
+        when: "{{workflow.parameters.run-optional}} == yes"
+        arguments: {parameters: [{name: msg, value: optional}]}
+  - name: echo
+    inputs: {parameters: [{name: msg}]}
+    container:
+      image: busybox:1.36
+      command: [echo, "{{inputs.parameters.msg}}"]

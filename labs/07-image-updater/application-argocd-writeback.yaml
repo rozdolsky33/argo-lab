@@ -1,0 +1,27 @@
+# Write-back method "argocd" (default): the updater changes the Application's kustomize image
+# override in the cluster. Git is NOT updated. Quick to see working, but not GitOps-pure.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: image-updater-demo
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+  annotations:
+    # alias=image ; the alias is referenced by the per-image annotations below
+    argocd-image-updater.argoproj.io/image-list: podinfo=ghcr.io/stefanprodan/podinfo
+    # semver strategy with a constraint: anything 6.7.x newer than what is deployed
+    argocd-image-updater.argoproj.io/podinfo.update-strategy: semver
+    argocd-image-updater.argoproj.io/podinfo.allow-tags: regexp:^6\.7\.\d+$
+    argocd-image-updater.argoproj.io/write-back-method: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+    targetRevision: main
+    path: labs/07-image-updater/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: image-updater-demo
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true]

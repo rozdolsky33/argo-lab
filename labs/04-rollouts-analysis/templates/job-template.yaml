@@ -1,0 +1,24 @@
+# Job provider: run any container; success = exit 0. The simplest gate, no metrics system needed.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: smoke-test
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: smoke
+    count: 3
+    interval: 10s
+    failureLimit: 1
+    provider:
+      job:
+        spec:
+          backoffLimit: 0
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: curl
+                image: curlimages/curl:8.10.1
+                command: ["sh", "-c", "curl -fsS http://{{args.service-name}}/color"]

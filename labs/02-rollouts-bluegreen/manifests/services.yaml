@@ -1,0 +1,17 @@
+# The controller injects a rollouts-pod-template-hash selector into each Service to pin it to
+# the active or preview ReplicaSet. You never edit the selectors yourself.
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluegreen-demo-active
+spec:
+  selector: {app: bluegreen-demo}
+  ports: [{name: http, port: 80, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluegreen-demo-preview
+spec:
+  selector: {app: bluegreen-demo}
+  ports: [{name: http, port: 80, targetPort: http}]

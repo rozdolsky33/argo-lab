@@ -1,0 +1,14 @@
+# Overlay applied after the upstream install.yaml.
+# server.insecure=true makes argocd-server speak plain HTTP so ingress-nginx can front it
+# without TLS passthrough. This is the documented approach for ingress-nginx:
+# https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cmd-params-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  server.insecure: "true"

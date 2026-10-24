@@ -1,0 +1,20 @@
+# CronWorkflow: a Workflow spec on a schedule. `argo cron list` to see it, `argo cron suspend` to pause.
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: every-two-minutes
+  namespace: argo
+spec:
+  schedules: ["*/2 * * * *"]
+  timezone: Europe/Kyiv
+  concurrencyPolicy: Replace
+  startingDeadlineSeconds: 0
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  workflowSpec:
+    entrypoint: tick
+    templates:
+    - name: tick
+      container:
+        image: busybox:1.36
+        command: [sh, -c, "date; echo tick"]

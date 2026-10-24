@@ -1,0 +1,23 @@
+# Web provider: GET a URL, pick a value out of the JSON body with jsonPath, evaluate an expression.
+# This example asks Prometheus' HTTP API whether the canary ingress served any 5xx in the last minute.
+# (Real-world use: hit your own service's /health or a feature-flag/API endpoint.)
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: no-5xx-web
+spec:
+  args:
+  - name: ingress
+  - name: namespace
+  metrics:
+  - name: no-5xx
+    count: 5
+    interval: 10s
+    failureLimit: 1
+    # The query returns a vector; an empty result (no 5xx at all) is also a pass.
+    successCondition: "result == 'success'"
+    provider:
+      web:
+        url: "http://prom-prometheus.monitoring.svc:9090/api/v1/query?query=sum(rate(nginx_ingress_controller_requests{ingress=%22{{args.ingress}}%22,namespace=%22{{args.namespace}}%22,status=~%225..%22}[1m]))"
+        timeoutSeconds: 5
+        jsonPath: "{$.status}"

@@ -1,0 +1,6 @@
+{
+  "name": "team-b-httpbin",
+  "team": "team-b",
+  "path": "labs/01-applicationsets/apps/httpbin",
+  "namespace": "team-b"
+}

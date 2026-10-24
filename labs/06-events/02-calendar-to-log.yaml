@@ -1,0 +1,27 @@
+# Calendar EventSource: cron-like events with no external input. The Sensor uses the log trigger,
+# useful for debugging what an event looks like.
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: calendar
+  namespace: argo-events
+spec:
+  calendar:
+    every-minute:
+      interval: 1m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: calendar
+  namespace: argo-events
+spec:
+  dependencies:
+  - name: tick
+    eventSourceName: calendar
+    eventName: every-minute
+  triggers:
+  - template:
+      name: log-it
+      log:
+        intervalSeconds: 1

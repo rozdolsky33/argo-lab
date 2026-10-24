@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: canary-demo
+spec:
+  replicas: 4
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels: {app: canary-demo}
+  template:
+    metadata:
+      labels: {app: canary-demo}
+    spec:
+      containers:
+      - name: demo
+        image: argoproj/rollouts-demo:blue
+        ports: [{name: http, containerPort: 8080}]
+        resources:
+          requests: {cpu: 10m, memory: 32Mi}
+  strategy:
+    canary:
+      stableService: canary-demo-stable
+      canaryService: canary-demo-canary
+      trafficRouting:
+        nginx:
+          stableIngress: canary-demo          # the controller creates canary-demo-canary-demo-canary
+          additionalIngressAnnotations:
+            canary-by-header: X-Canary        # send "X-Canary: always" to force the canary
+      # Without trafficRouting, the weight is approximated by pod count only.
+      # With nginx trafficRouting, the controller sets nginx.ingress.kubernetes.io/canary-weight.
+      steps:
+      - setWeight: 20
+      - pause: {}                 # indefinite: wait for `promote`
+      - setWeight: 50
+      - pause: {duration: 30s}
+      - setWeight: 80
+      - pause: {duration: 30s}
+      # 100% when the steps complete

@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: analysis-demo
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: analysis.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: {name: analysis-demo-stable, port: {name: http}}

@@ -1,0 +1,32 @@
+# Git file generator: parameters come from JSON/YAML files in the repo (config/*/config.json).
+# Teams own their config file; the platform owns the template.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-by-config-file
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+  - git:
+      repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+      revision: main
+      files:
+      - path: labs/01-applicationsets/config/**/config.json
+  template:
+    metadata:
+      name: '{{.name}}'
+      labels:
+        team: '{{.team}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+        targetRevision: main
+        path: '{{.path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true]

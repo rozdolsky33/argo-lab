@@ -1,0 +1,17 @@
+# A workflow that composes both templates from 06 via templateRef. Submit with argo submit / kubectl create.
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: use-templates-
+  namespace: argo
+spec:
+  entrypoint: main
+  templates:
+  - name: main
+    steps:
+    - - name: ci
+        templateRef: {name: build-and-test, template: pipeline}
+        arguments: {parameters: [{name: repo, value: argo-lab}]}
+    - - name: notify
+        templateRef: {name: notify, template: slack-ish, clusterScope: true}
+        arguments: {parameters: [{name: text, value: "pipeline finished"}]}

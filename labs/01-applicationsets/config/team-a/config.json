@@ -1,0 +1,6 @@
+{
+  "name": "team-a-podinfo",
+  "team": "team-a",
+  "path": "labs/apps/podinfo/overlays/dev",
+  "namespace": "team-a"
+}

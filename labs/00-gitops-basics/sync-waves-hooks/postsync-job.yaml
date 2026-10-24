@@ -1,0 +1,17 @@
+# PostSync hook: runs after all waves are Healthy. Think: smoke test / notification.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smoke-test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded      # clean up only if it passed
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: curl
+        image: curlimages/curl:8.10.1
+        command: ["sh", "-c", "curl -fsS http://waves-app:9898/ && echo 'PostSync: smoke test passed'"]

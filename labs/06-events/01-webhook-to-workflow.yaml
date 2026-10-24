@@ -1,0 +1,92 @@
+# EventSource (webhook) -> EventBus -> Sensor -> trigger: create an Argo Workflow.
+# The classic "CI webhook kicks off a pipeline" pattern.
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: webhook
+  namespace: argo-events
+spec:
+  service:
+    ports:
+    - port: 12000
+      targetPort: 12000
+  webhook:
+    example:                       # event name; referenced by the Sensor as dependency eventName
+      port: "12000"
+      endpoint: /example
+      method: POST
+---
+# The Sensor's workflow trigger creates resources in another namespace (argo), so its service
+# account needs permission to create Workflows there.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: operate-workflow-sa
+  namespace: argo-events
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: operate-workflow-role
+rules:
+- apiGroups: [argoproj.io]
+  resources: [workflows, workflowtemplates, cronworkflows, clusterworkflowtemplates]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operate-workflow-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: operate-workflow-role
+subjects:
+- kind: ServiceAccount
+  name: operate-workflow-sa
+  namespace: argo-events
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: webhook
+  namespace: argo-events
+spec:
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+  - name: payload
+    eventSourceName: webhook
+    eventName: example
+  triggers:
+  - template:
+      name: run-workflow
+      k8s:
+        operation: create
+        source:
+          resource:
+            apiVersion: argoproj.io/v1alpha1
+            kind: Workflow
+            metadata:
+              generateName: from-webhook-
+              namespace: argo
+            spec:
+              entrypoint: print
+              arguments:
+                parameters:
+                - name: body
+                  value: "replaced by parameters below"
+              templates:
+              - name: print
+                inputs:
+                  parameters: [{name: body}]
+                container:
+                  image: busybox:1.36
+                  command: [sh, -c]
+                  args: ["echo 'webhook body:'; echo '{{inputs.parameters.body}}'"]
+        # Inject fields from the event into the resource before creating it.
+        parameters:
+        - src:
+            dependencyName: payload
+            dataKey: body           # the whole JSON body; use body.<field> for a single field
+          dest: spec.arguments.parameters.0.value

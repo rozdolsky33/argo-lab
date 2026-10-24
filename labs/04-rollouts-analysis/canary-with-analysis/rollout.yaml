@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: analysis-demo
+spec:
+  replicas: 4
+  selector:
+    matchLabels: {app: analysis-demo}
+  template:
+    metadata:
+      labels: {app: analysis-demo}
+    spec:
+      containers:
+      - name: demo
+        image: argoproj/rollouts-demo:blue   # try :bad-red to make analysis fail (returns 500s)
+        ports: [{name: http, containerPort: 8080}]
+        resources:
+          requests: {cpu: 10m, memory: 32Mi}
+  strategy:
+    canary:
+      stableService: analysis-demo-stable
+      canaryService: analysis-demo-canary
+      trafficRouting:
+        nginx:
+          stableIngress: analysis-demo
+      # Background analysis: starts at the given step and runs for the whole canary; a failure aborts.
+      analysis:
+        templates:
+        - templateName: success-rate
+        startingStep: 2
+        args:
+        - name: ingress
+          value: analysis-demo-analysis-demo-canary   # the generated canary ingress name
+        - name: namespace
+          value: analysis
+      steps:
+      - setWeight: 20
+      # Inline analysis: a step that must succeed before moving on.
+      - analysis:
+          templates:
+          - templateName: smoke-test
+          args:
+          - name: service-name
+            value: analysis-demo-canary
+      - setWeight: 50
+      - pause: {duration: 1m}
+      - setWeight: 80
+      - pause: {duration: 1m}

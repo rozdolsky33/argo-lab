@@ -1,0 +1,4 @@
+.cache/
+cluster/kind-config.yaml
+*.rendered.yaml
+.DS_Store

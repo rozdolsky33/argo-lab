@@ -1,0 +1,34 @@
+# Plain Helm chart Application with inline values, plus ignoreDifferences for a field another
+# controller mutates (here: replicas, as if an HPA owned it).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: podinfo-helm
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  source:
+    repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.7.1
+    helm:
+      releaseName: podinfo
+      valuesObject:
+        replicaCount: 1
+        ui:
+          message: "inline helm values"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: podinfo-helm-inline
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /spec/replicas
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions:
+    - CreateNamespace=true
+    - RespectIgnoreDifferences=true   # don't overwrite ignored fields on sync either
+    - ServerSideApply=true

@@ -1,0 +1,18 @@
+# Lab 00, step 3: sync waves + hooks. Watch the sync in the UI: PreSync job -> wave 0 -> 1 -> 2 -> PostSync.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: waves-demo
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+    targetRevision: main
+    path: labs/00-gitops-basics/sync-waves-hooks
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: waves-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]

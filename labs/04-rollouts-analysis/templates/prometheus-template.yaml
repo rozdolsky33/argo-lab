@@ -1,0 +1,25 @@
+# Prometheus provider: the production pattern. Query ingress-nginx metrics for the canary Service's
+# success rate. Requires `make prometheus` (kube-prometheus-stack scrapes ingress-nginx through the
+# ServiceMonitor in this folder).
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  args:
+  - name: ingress
+  - name: namespace
+  metrics:
+  - name: success-rate
+    interval: 20s
+    count: 5
+    # at least 95% of requests to the canary ingress returned non-5xx
+    successCondition: "default(result[0], 1) >= 0.95"
+    failureLimit: 2
+    provider:
+      prometheus:
+        address: http://prom-prometheus.monitoring.svc:9090
+        query: |
+          sum(rate(nginx_ingress_controller_requests{ingress="{{args.ingress}}",namespace="{{args.namespace}}",status!~"5.."}[1m]))
+          /
+          sum(rate(nginx_ingress_controller_requests{ingress="{{args.ingress}}",namespace="{{args.namespace}}"}[1m]))

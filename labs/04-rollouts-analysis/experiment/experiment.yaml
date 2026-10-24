@@ -1,0 +1,41 @@
+# Experiment: run N ReplicaSets side by side for a duration, optionally with analysis, without
+# touching the production Rollout. Useful for A/B or "does the new build even start?".
+apiVersion: argoproj.io/v1alpha1
+kind: Experiment
+metadata:
+  name: colors-experiment
+  namespace: analysis
+spec:
+  duration: 2m
+  progressDeadlineSeconds: 60
+  templates:
+  - name: blue
+    replicas: 1
+    selector:
+      matchLabels: {app: exp, color: blue}
+    template:
+      metadata:
+        labels: {app: exp, color: blue}
+      spec:
+        containers:
+        - name: demo
+          image: argoproj/rollouts-demo:blue
+          ports: [{containerPort: 8080}]
+  - name: yellow
+    replicas: 1
+    selector:
+      matchLabels: {app: exp, color: yellow}
+    template:
+      metadata:
+        labels: {app: exp, color: yellow}
+      spec:
+        containers:
+        - name: demo
+          image: argoproj/rollouts-demo:yellow
+          ports: [{containerPort: 8080}]
+  analyses:
+  - name: smoke-yellow
+    templateName: smoke-test
+    args:
+    - name: service-name
+      value: colors-experiment-yellow     # Experiments create a Service per template when a Service is requested

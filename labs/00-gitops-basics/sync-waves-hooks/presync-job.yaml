@@ -1,0 +1,17 @@
+# PreSync hook: runs before anything else is synced. Think: DB migration.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation   # recreate on every sync
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate
+        image: busybox:1.36
+        command: ["sh", "-c", "echo 'PreSync: running migrations...'; sleep 10; echo done"]

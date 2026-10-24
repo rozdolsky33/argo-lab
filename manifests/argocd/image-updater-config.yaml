@@ -1,0 +1,22 @@
+# Config for Argo CD Image Updater (same namespace as Argo CD). Keys map to env vars in the
+# upstream Deployment. Registries are configured here too (see lab 07).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-image-updater-config
+  namespace: argocd
+data:
+  argocd.namespace: argocd
+  log.level: info
+  interval: 2m
+  kube.events: "true"
+  registries.conf: |
+    registries:
+    - name: Docker Hub
+      prefix: docker.io
+      api_url: https://registry-1.docker.io
+      defaultns: library
+      default: true
+    - name: GitHub Container Registry
+      prefix: ghcr.io
+      api_url: https://ghcr.io

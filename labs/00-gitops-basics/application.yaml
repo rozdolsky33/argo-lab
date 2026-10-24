@@ -1,0 +1,18 @@
+# Lab 00, step 1: the simplest possible Application. Manual sync, no pruning.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: podinfo-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+    targetRevision: main
+    path: labs/apps/podinfo/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: podinfo-dev
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true

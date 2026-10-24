@@ -1,0 +1,23 @@
+# Wave 1: waits for wave 0 to be Healthy before it is applied.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waves-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: waves-app}
+  template:
+    metadata:
+      labels: {app: waves-app}
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/stefanprodan/podinfo:6.7.0
+        ports: [{name: http, containerPort: 9898}]
+        env:
+        - name: PODINFO_UI_MESSAGE
+          valueFrom: {configMapKeyRef: {name: app-config, key: GREETING}}
+        readinessProbe: {httpGet: {path: /readyz, port: http}}

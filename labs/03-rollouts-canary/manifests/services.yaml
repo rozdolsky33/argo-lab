@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-demo-stable
+spec:
+  selector: {app: canary-demo}
+  ports: [{name: http, port: 80, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-demo-canary
+spec:
+  selector: {app: canary-demo}
+  ports: [{name: http, port: 80, targetPort: http}]

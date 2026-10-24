@@ -1,0 +1,26 @@
+# Multi-source Application: a Helm chart from one repo with values from another (this repo).
+# The $values alias refers to the second source's checkout.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: podinfo-helm-multisource
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  sources:
+  - repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.7.1
+    helm:
+      valueFiles:
+      - $values/labs/08-argocd-advanced/multi-source/values.yaml
+  - repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+    targetRevision: main
+    ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: podinfo-helm
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true]

@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: image-updater-demo
+resources:
+- deployment.yaml
+images:
+# Image Updater (git write-back) edits this via .argocd-source-<app>.yaml, not here;
+# with argocd write-back it edits the Application's kustomize.images parameter.
+- name: ghcr.io/stefanprodan/podinfo
+  newTag: 6.7.0

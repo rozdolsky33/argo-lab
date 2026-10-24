@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: analysis-demo-stable
+spec:
+  selector: {app: analysis-demo}
+  ports: [{name: http, port: 80, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analysis-demo-canary
+spec:
+  selector: {app: analysis-demo}
+  ports: [{name: http, port: 80, targetPort: http}]

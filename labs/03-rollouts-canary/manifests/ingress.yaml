@@ -1,0 +1,16 @@
+# The "stable" ingress. Argo Rollouts clones it into a second ingress with nginx canary
+# annotations pointing at the canary Service and keeps canary-weight in sync with the steps.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-demo
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: canary.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: {name: canary-demo-stable, port: {name: http}}

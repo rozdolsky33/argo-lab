@@ -1,0 +1,12 @@
+replicaCount: 2
+ui:
+  color: "#6f42c1"
+  message: "helm chart + values from another repo"
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+  - host: podinfo-helm.localhost
+    paths:
+    - path: /
+      pathType: Prefix

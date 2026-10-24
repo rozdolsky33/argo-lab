@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: podinfo-prod
+resources:
+- ../../base
+- ingress.yaml
+replicas:
+- name: podinfo
+  count: 2
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/0/value
+      value: "#1b5e20"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/1/value
+      value: "hello from PROD"
+  target:
+    kind: Deployment
+    name: podinfo

@@ -1,0 +1,18 @@
+# Lab 00, step 4: App of Apps. One root Application whose "resources" are other Applications.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+    targetRevision: main
+    path: labs/00-gitops-basics/app-of-apps/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd          # child Applications must live in the Argo CD namespace
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}

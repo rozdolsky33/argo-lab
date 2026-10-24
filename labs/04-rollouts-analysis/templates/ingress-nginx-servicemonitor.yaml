@@ -1,0 +1,30 @@
+# Lets Prometheus scrape ingress-nginx so the success-rate template has data.
+# ingress-nginx's kind manifest exposes metrics on 10254 but has no Service for it; this adds one.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-metrics
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx-metrics
+spec:
+  selector:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/component: controller
+  ports:
+  - name: metrics
+    port: 10254
+    targetPort: 10254
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ingress-nginx
+  namespace: ingress-nginx
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx-metrics
+  endpoints:
+  - port: metrics
+    interval: 15s

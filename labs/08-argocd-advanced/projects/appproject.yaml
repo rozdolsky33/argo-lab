@@ -1,0 +1,43 @@
+# AppProject: the multi-tenancy boundary. Restricts where apps may come from, where they may deploy,
+# which resource kinds they may create, when they may sync, and who may do what (RBAC roles).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-a
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  description: Team A's applications
+  sourceRepos:
+  - https://github.com/CHANGE_ME/ArgoCD.git
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: 'team-a-*'              # glob: only namespaces with this prefix
+  clusterResourceWhitelist:
+  - group: ""
+    kind: Namespace                    # needed for CreateNamespace=true; nothing else cluster-scoped
+  namespaceResourceBlacklist:
+  - group: ""
+    kind: ResourceQuota
+  - group: ""
+    kind: LimitRange
+  # Sync windows: "deny" blocks syncs during the window, "allow" permits only during it.
+  syncWindows:
+  - kind: deny
+    schedule: "0 22 * * *"             # every day at 22:00
+    duration: 8h                       # ...until 06:00
+    applications: ["*"]
+    manualSync: true                   # humans may still click Sync; automated sync is blocked
+    timeZone: Europe/Kyiv
+  roles:
+  - name: developer
+    description: Can sync and view, cannot delete or change settings
+    policies:
+    - p, proj:team-a:developer, applications, get,  team-a/*, allow
+    - p, proj:team-a:developer, applications, sync, team-a/*, allow
+    groups: [team-a-devs]              # SSO group names (Dex) ... or use a token:
+  - name: ci
+    description: Token-based role for a CI pipeline
+    policies:
+    - p, proj:team-a:ci, applications, sync, team-a/*, allow
+    - p, proj:team-a:ci, applications, get,  team-a/*, allow

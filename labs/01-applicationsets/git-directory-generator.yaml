@@ -1,0 +1,30 @@
+# Git directory generator: one Application per sub-directory matching the path glob.
+# Add a folder under labs/01-applicationsets/apps/ and push -> a new Application appears.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-by-directory
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+  - git:
+      repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+      revision: main
+      directories:
+      - path: labs/01-applicationsets/apps/*
+  template:
+    metadata:
+      name: '{{.path.basename}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+        targetRevision: main
+        path: '{{.path.path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'appset-{{.path.basename}}'
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true]

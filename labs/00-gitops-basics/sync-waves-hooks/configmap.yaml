@@ -1,0 +1,9 @@
+# Wave 0 (default). Synced after PreSync hooks finish, before wave 1.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+data:
+  GREETING: "waves demo v1"

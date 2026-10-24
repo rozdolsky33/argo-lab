@@ -1,0 +1,38 @@
+# Matrix generator: cartesian product of two generators. Here every app directory x every "cluster"
+# (both entries point at the in-cluster API; in real life they would be different clusters).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-matrix
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+  - matrix:
+      generators:
+      - git:
+          repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+          revision: main
+          directories:
+          - path: labs/01-applicationsets/apps/*
+      - list:
+          elements:
+          - cluster: east
+            url: https://kubernetes.default.svc
+          - cluster: west
+            url: https://kubernetes.default.svc
+  template:
+    metadata:
+      name: '{{.path.basename}}-{{.cluster}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+        targetRevision: main
+        path: '{{.path.path}}'
+      destination:
+        server: '{{.url}}'
+        namespace: '{{.path.basename}}-{{.cluster}}'
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true]

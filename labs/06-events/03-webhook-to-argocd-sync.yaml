@@ -1,0 +1,73 @@
+# Webhook -> Sensor -> trigger a hard refresh of an Argo CD Application by patching an annotation.
+# Shows the k8s trigger with operation "patch" against a CRD in another namespace, plus a data filter
+# so only events whose body has {"app": "<name>"} fire.
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: argocd-hook
+  namespace: argo-events
+spec:
+  service:
+    ports:
+    - port: 12001
+      targetPort: 12001
+  webhook:
+    refresh:
+      port: "12001"
+      endpoint: /refresh
+      method: POST
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: operate-argocd-apps
+rules:
+- apiGroups: [argoproj.io]
+  resources: [applications]
+  verbs: [get, list, patch, update]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operate-argocd-apps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: operate-argocd-apps
+subjects:
+- kind: ServiceAccount
+  name: operate-workflow-sa      # reuse the SA from 01
+  namespace: argo-events
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: argocd-refresh
+  namespace: argo-events
+spec:
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+  - name: hook
+    eventSourceName: argocd-hook
+    eventName: refresh
+    filters:
+      data:
+      - path: body.app
+        type: string
+        value: ["podinfo-dev"]       # only fire for this app
+  triggers:
+  - template:
+      name: refresh-app
+      k8s:
+        operation: patch
+        patchStrategy: merge
+        source:
+          resource:
+            apiVersion: argoproj.io/v1alpha1
+            kind: Application
+            metadata:
+              name: podinfo-dev
+              namespace: argocd
+              annotations:
+                argocd.argoproj.io/refresh: hard

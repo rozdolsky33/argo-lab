@@ -1,0 +1,11 @@
+# Default EventBus (name must be "default" unless EventSources/Sensors reference another).
+# JetStream is the recommended backend; 3 replicas is the supported minimum.
+apiVersion: argoproj.io/v1alpha1
+kind: EventBus
+metadata:
+  name: default
+  namespace: argo-events
+spec:
+  jetstream:
+    version: latest
+    replicas: 3

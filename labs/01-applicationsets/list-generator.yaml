@@ -1,0 +1,33 @@
+# List generator: one Application per element. The most explicit generator; good for a fixed set of envs.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: podinfo-envs
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - list:
+      elements:
+      - env: dev
+        replicas: "1"
+      - env: prod
+        replicas: "2"
+  template:
+    metadata:
+      name: 'podinfo-{{.env}}'
+      labels:
+        env: '{{.env}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/CHANGE_ME/ArgoCD.git
+        targetRevision: main
+        path: 'labs/apps/podinfo/overlays/{{.env}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'podinfo-{{.env}}'
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true]

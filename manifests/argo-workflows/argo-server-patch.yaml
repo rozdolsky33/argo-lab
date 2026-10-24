@@ -1,0 +1,18 @@
+# Strategic-merge patch for the quick-start argo-server Deployment:
+#  - --secure=false: serve plain HTTP so ingress-nginx can proxy it
+#  - --auth-mode=server: UI/CLI use the argo-server service account (learning only, no login)
+#  - readiness probe switched to HTTP accordingly
+spec:
+  template:
+    spec:
+      containers:
+      - name: argo-server
+        args:
+        - server
+        - --auth-mode=server
+        - --secure=false
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 2746
+            scheme: HTTP
