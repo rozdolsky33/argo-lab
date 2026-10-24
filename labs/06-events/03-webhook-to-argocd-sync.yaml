@@ -17,22 +17,27 @@ spec:
       endpoint: /refresh
       method: POST
 ---
+# Least privilege: a Role in the argocd namespace that may only patch the one Application
+# this Sensor targets. The merge patch needs get + patch.
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: operate-argocd-apps
+  namespace: argocd
 rules:
 - apiGroups: [argoproj.io]
   resources: [applications]
-  verbs: [get, list, patch, update]
+  resourceNames: [podinfo-dev]
+  verbs: [get, patch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   name: operate-argocd-apps
+  namespace: argocd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: Role
   name: operate-argocd-apps
 subjects:
 - kind: ServiceAccount
